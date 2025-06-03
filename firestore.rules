@@ -1,0 +1,39 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is accessing their own data
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Parents collection
+    match /parents/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+
+    // Children collection
+    match /children/{childId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+        (isOwner(resource.data.parentId) || 
+         isOwner(request.resource.data.parentId));
+    }
+
+    // Check-ins collection
+    match /checkIns/{checkInId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 
