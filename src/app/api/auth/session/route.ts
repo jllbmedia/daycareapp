@@ -1,19 +1,21 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
   try {
     const { token } = await request.json();
-    
-    // Set the session cookie
-    await cookies().set('session', token, {
+
+    const response = NextResponse.json({ success: true });
+
+    // ✅ Set the session cookie correctly using NextResponse
+    response.cookies.set('session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: '/', // optional, good practice
     });
 
-    return NextResponse.json({ success: true });
+    return response;
   } catch (error) {
     console.error('Error setting session:', error);
     return NextResponse.json({ success: false }, { status: 500 });
@@ -22,11 +24,20 @@ export async function POST(request: Request) {
 
 export async function DELETE() {
   try {
-    // Clear the session cookie
-    await cookies().delete('session');
-    return NextResponse.json({ success: true });
+    const response = NextResponse.json({ success: true });
+
+    // ✅ Clear the session cookie
+    response.cookies.set('session', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      expires: new Date(0), // immediately expires
+      path: '/',
+    });
+
+    return response;
   } catch (error) {
     console.error('Error clearing session:', error);
     return NextResponse.json({ success: false }, { status: 500 });
   }
-} 
+}

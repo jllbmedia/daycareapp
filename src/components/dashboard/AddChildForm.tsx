@@ -26,9 +26,16 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
   const [error, setError] = useState('');
   const { register, handleSubmit, reset, formState: { errors } } = useForm<AddChildFormInputs>();
 
+  const calculateAge = (dob: string): number => {
+    const birthDate = new Date(dob);
+    const ageDiff = Date.now() - birthDate.getTime();
+    return Math.floor(ageDiff / (1000 * 60 * 60 * 24 * 365.25));
+  };
+
   const onSubmit = async (data: AddChildFormInputs) => {
     try {
       setError('');
+
       const allergiesArray = data.allergies
         ? data.allergies.split(',').map(allergy => allergy.trim())
         : [];
@@ -37,7 +44,7 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
         firstName: data.firstName,
         lastName: data.lastName,
         dateOfBirth: data.dateOfBirth,
-        parentId: user?.uid,
+        parentId: user?.uid ?? '', // ✅ Ensures it's always a string
         allergies: allergiesArray,
         emergencyContacts: [
           {
@@ -49,8 +56,15 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
       };
 
       const docRef = await addDoc(collection(db, 'children'), childData);
-      const newChild = { id: docRef.id, ...childData } as Child;
-      
+
+      const newChild: Child = {
+        id: docRef.id,
+        ...childData,
+        age: calculateAge(childData.dateOfBirth),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
       setChildren(prev => [...prev, newChild]);
       reset();
     } catch (err) {
@@ -125,7 +139,7 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
 
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-gray-900">Emergency Contact</h3>
-          
+
           <div>
             <label htmlFor="emergencyContactName" className="block text-sm font-medium text-gray-700">
               Name
@@ -186,4 +200,4 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
       </div>
     </form>
   );
-} 
+}

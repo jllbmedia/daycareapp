@@ -1,9 +1,11 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, orderBy, startOf, endOf, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns'; // ✅ Only once, all together
 import { db } from '@/lib/firebase';
 import { Child, CheckInRecord } from '@/types';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 
 interface AttendanceData {
   date: string;

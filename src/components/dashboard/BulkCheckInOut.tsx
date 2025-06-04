@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { Child, CheckInRecord } from '@/types';
 import { db } from '@/lib/firebase';

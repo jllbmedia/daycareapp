@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState } from 'react';
 import { BulkCheckInOut } from '@/components/dashboard/BulkCheckInOut';
 import { AttendanceReports } from '@/components/dashboard/AttendanceReports';
@@ -9,7 +11,6 @@ import { NotificationProvider } from '@/components/notifications/NotificationPro
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 export default function TestPage() {
-  // For testing purposes, we'll use some dummy IDs
   const dummyParentId = 'test-parent-1';
   const dummyChildId = 'test-child-1';
   const dummyStaffId = 'test-staff-1';
@@ -60,4 +61,4 @@ export default function TestPage() {
       </div>
     </NotificationProvider>
   );
-} 
+}
