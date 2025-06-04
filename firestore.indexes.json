@@ -1,4 +1,23 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "checkIns",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "childId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "checkInTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

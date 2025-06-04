@@ -6,12 +6,14 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed-test-data": "ts-node scripts/seed-test-data.ts"
   },
   "dependencies": {
     "@firebase/auth": "^1.10.6",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.0.1",
+    "date-fns": "^4.1.0",
     "firebase": "^11.8.1",
     "formik": "^2.4.6",
     "next": "15.3.3",
@@ -19,18 +21,20 @@
     "react-dom": "^19.0.0",
     "react-firebase-hooks": "^5.1.1",
     "react-hook-form": "^7.57.0",
+    "react-hot-toast": "^2.5.2",
     "yup": "^1.6.1",
     "zod": "^3.25.49"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^20.17.57",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

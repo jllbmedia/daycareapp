@@ -8,6 +8,7 @@ import { db } from '@/lib/firebase';
 import { Child } from '@/types';
 import { ChildList } from '@/components/dashboard/ChildList';
 import { AddChildForm } from '@/components/dashboard/AddChildForm';
+import { ParentAttendanceHistory } from '@/components/dashboard/ParentAttendanceHistory';
 
 export default function DashboardPage() {
   const { user, loading: authLoading, logout } = useAuth();
@@ -53,11 +54,20 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     try {
+      setLoading(true);
       await logout();
-      router.replace('/login');
+      
+      // Clear any component state
+      setChildren([]);
+      setError('');
+      
+      // Force a hard redirect to the login page and clear navigation history
+      window.location.replace('/login');
     } catch (error) {
       console.error('Error logging out:', error);
       setError('Failed to log out. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,14 +122,19 @@ export default function DashboardPage() {
           </div>
         )}
         <div className="px-4 py-6 sm:px-0">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div>
-              <h2 className="text-lg font-medium mb-4">Your Children</h2>
-              <ChildList children={children} setChildren={setChildren} />
+          <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div>
+                <h2 className="text-lg font-medium mb-4">Your Children</h2>
+                <ChildList children={children} setChildren={setChildren} />
+              </div>
+              <div>
+                <h2 className="text-lg font-medium mb-4">Add a Child</h2>
+                <AddChildForm setChildren={setChildren} />
+              </div>
             </div>
             <div>
-              <h2 className="text-lg font-medium mb-4">Add a Child</h2>
-              <AddChildForm setChildren={setChildren} />
+              <ParentAttendanceHistory />
             </div>
           </div>
         </div>

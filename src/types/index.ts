@@ -3,9 +3,11 @@ export interface Child {
   firstName: string;
   lastName: string;
   dateOfBirth: string;
+  age: number;
   parentId: string;
-  allergies?: string[];
-  emergencyContacts: EmergencyContact[];
+  allergies: string[];
+  createdAt: any;
+  updatedAt: any;
 }
 
 export interface EmergencyContact {
@@ -17,25 +19,43 @@ export interface EmergencyContact {
 export interface CheckInRecord {
   id: string;
   childId: string;
-  checkInTime: Date;
-  checkOutTime?: Date;
+  parentId: string;
+  checkInTime: any;
+  checkOutTime: any | null;
+  dropOffInfo: {
+    personName: string;
+    relationship: string;
+    signature: string;
+    notes: string;
+  };
+  pickUpInfo?: {
+    personName: string;
+    relationship: string;
+    signature: string;
+    notes: string;
+    time: any;
+  };
   healthStatus: {
     hasFever: boolean;
-    temperature?: number;
-    symptoms?: string[];
-    medications?: string[];
+    temperature: number | null;
+    symptoms: string[];
+    medications: string[];
   };
   meals: {
-    breakfast?: boolean;
-    lunch?: boolean;
-    snack?: boolean;
+    breakfast: boolean;
+    lunch: boolean;
+    snack: boolean;
   };
-  concerns?: string;
-  alternativePickup?: {
+  concerns: string | null;
+  alternativePickup: {
     name: string;
     relationship: string;
     phone: string;
-  };
+  } | null;
+  createdAt: any;
+  createdBy: string;
+  updatedAt?: any;
+  updatedBy?: string;
 }
 
 export interface Parent {

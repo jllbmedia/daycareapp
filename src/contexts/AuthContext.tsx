@@ -83,7 +83,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await signOut(auth);
+    try {
+      // Clear the session cookie first
+      await fetch('/api/auth/session', {
+        method: 'DELETE',
+      });
+      
+      // Sign out from Firebase
+      await signOut(auth);
+      
+      // Clear any local storage or session storage data
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (error) {
+      console.error('Error during logout:', error);
+      throw error;
+    }
   };
 
   const value = {
