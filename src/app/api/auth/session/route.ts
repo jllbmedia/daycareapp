@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const { token } = await request.json();
     
     // Set the session cookie
-    cookies().set('session', token, {
+    await cookies().set('session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
 export async function DELETE() {
   try {
     // Clear the session cookie
-    cookies().delete('session');
+    await cookies().delete('session');
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error clearing session:', error);
