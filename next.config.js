@@ -3,8 +3,21 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    // This allows production builds to complete even if there are ESLint errors
-    ignoreDuringBuilds: true,
+    // Warning: Only use this in development
+    ignoreDuringBuilds: process.env.NODE_ENV === 'development',
+  },
+  // Optimize images
+  images: {
+    domains: ['firebasestorage.googleapis.com'],
+    formats: ['image/avif', 'image/webp'],
+  },
+  // Production optimizations
+  swcMinify: true,
+  reactStrictMode: true,
+  poweredByHeader: false,
+  // Improve production performance
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
   },
 };
 
