@@ -11,7 +11,7 @@ import { AddChildForm } from '@/components/dashboard/AddChildForm';
 import { ParentAttendanceHistory } from '@/components/dashboard/ParentAttendanceHistory';
 
 export default function DashboardPage() {
-  const { user, loading: authLoading, logout } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,25 +52,6 @@ export default function DashboardPage() {
     fetchChildren();
   }, [user, router, authLoading]);
 
-  const handleLogout = async () => {
-    try {
-      setLoading(true);
-      await logout();
-      
-      // Clear any component state
-      setChildren([]);
-      setError('');
-      
-      // Force a hard redirect to the login page and clear navigation history
-      window.location.replace('/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
-      setError('Failed to log out. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -85,27 +66,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-indigo-600">Parent Dashboard</h1>
-            </div>
-            <div className="flex items-center">
-              <span className="mr-4 text-gray-600">
-                {user.email}
-              </span>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {error && (
           <div className="mb-4 rounded-md bg-red-50 p-4">

@@ -75,7 +75,7 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
             <input
               {...register('firstName', { required: 'First name is required' })}
               type="text"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900"
             />
             {errors.firstName && (
               <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
@@ -89,7 +89,7 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
             <input
               {...register('lastName', { required: 'Last name is required' })}
               type="text"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900"
             />
             {errors.lastName && (
               <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
@@ -104,7 +104,7 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
           <input
             {...register('dateOfBirth', { required: 'Date of birth is required' })}
             type="date"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900"
           />
           {errors.dateOfBirth && (
             <p className="mt-1 text-sm text-red-600">{errors.dateOfBirth.message}</p>
@@ -119,7 +119,7 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
             {...register('allergies')}
             type="text"
             placeholder="e.g., peanuts, milk, eggs"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900"
           />
         </div>
 
@@ -133,7 +133,7 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
             <input
               {...register('emergencyContactName', { required: 'Emergency contact name is required' })}
               type="text"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900"
             />
             {errors.emergencyContactName && (
               <p className="mt-1 text-sm text-red-600">{errors.emergencyContactName.message}</p>
@@ -147,7 +147,7 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
             <input
               {...register('emergencyContactRelationship', { required: 'Relationship is required' })}
               type="text"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900"
             />
             {errors.emergencyContactRelationship && (
               <p className="mt-1 text-sm text-red-600">{errors.emergencyContactRelationship.message}</p>
@@ -167,7 +167,7 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
                 },
               })}
               type="tel"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900"
             />
             {errors.emergencyContactPhone && (
               <p className="mt-1 text-sm text-red-600">{errors.emergencyContactPhone.message}</p>
