@@ -6,6 +6,7 @@ import { format, startOfDay, subDays } from 'date-fns'; // ✅ Only once, all to
 import { db } from '@/lib/firebase';
 import { Child, CheckInRecord } from '@/types';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AttendanceData {
   date: string;
@@ -29,6 +30,7 @@ export function AttendanceReports() {
   const [childrenStats, setChildrenStats] = useState<ChildAttendance[]>([]);
   const [dateRange, setDateRange] = useState<'week' | 'month'>('week');
   const [error, setError] = useState('');
+  const user = useAuth();
 
   const fetchAttendanceData = useCallback(async () => {
     try {
@@ -112,7 +114,7 @@ export function AttendanceReports() {
     } finally {
       setLoading(false);
     }
-  }, [dateRange]);
+  }, [dateRange, user?.uid]);
 
   useEffect(() => {
     fetchAttendanceData();

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { storage, db } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
+import { getStorage } from 'firebase/storage';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +22,9 @@ interface Activity {
   timestamp: Date;
   createdBy: string;
 }
+
+// Update storage reference
+const storage = getStorage();
 
 export function DailyActivities({ childId }: DailyActivityProps) {
   const { user } = useAuth();
