@@ -9,6 +9,7 @@ import { Child } from '@/types';
 import { ChildList } from '@/components/dashboard/ChildList';
 import { AddChildForm } from '@/components/dashboard/AddChildForm';
 import { ParentAttendanceHistory } from '@/components/dashboard/ParentAttendanceHistory';
+import { ErrorBoundary } from 'react-error-boundary';
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();

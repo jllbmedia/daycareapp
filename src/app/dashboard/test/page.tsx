@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { BulkCheckInOut } from '@/components/dashboard/BulkCheckInOut';
 import { AttendanceReports } from '@/components/dashboard/AttendanceReports';
 import { DailyActivities } from '@/components/dashboard/DailyActivities';
