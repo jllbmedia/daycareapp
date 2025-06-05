@@ -89,7 +89,7 @@ export default function DashboardPage() {
                   <h2 className="text-xl font-bold text-gray-900">Your Children</h2>
                   <p className="mt-1 text-sm text-gray-500">Manage your registered children and their attendance</p>
                 </div>
-                <ChildList children={children} setChildren={setChildren} />
+                <ChildList childrenData={children} setChildren={setChildren} />
               </div>
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="border-b border-gray-200 pb-4 mb-6">
@@ -102,7 +102,7 @@ export default function DashboardPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <div className="border-b border-gray-200 pb-4 mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Attendance History</h2>
-                <p className="mt-1 text-sm text-gray-500">View and track your children's attendance records</p>
+                <p className="mt-1 text-sm text-gray-500">View and track your children&apos;s attendance records</p>
               </div>
               <ParentAttendanceHistory />
             </div>

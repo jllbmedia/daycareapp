@@ -6,18 +6,19 @@ import { CheckInForm } from './CheckInForm';
 import { CheckInHistory } from './CheckInHistory';
 import { EditChildForm } from './EditChildForm';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { differenceInYears } from 'date-fns';
 
 interface ChildListProps {
-  children: Child[];
-  setChildren: (children: Child[]) => void;
+  childrenData: Child[];
+  setChildren: React.Dispatch<React.SetStateAction<Child[]>>;
 }
 
-function ChildListContent({ children, setChildren }: ChildListProps) {
+function ChildListContent({ childrenData, setChildren }: ChildListProps) {
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [showHistory, setShowHistory] = useState<Child | null>(null);
   const [editingChild, setEditingChild] = useState<Child | null>(null);
 
-  if (children.length === 0) {
+  if (childrenData.length === 0) {
     return (
       <div className="text-center py-4">
         <p className="text-gray-500">No children registered yet</p>
@@ -26,14 +27,18 @@ function ChildListContent({ children, setChildren }: ChildListProps) {
   }
 
   const handleUpdateChild = (updatedChild: Child) => {
-    setChildren(children.map(child => 
+    setChildren(childrenData.map(child => 
       child.id === updatedChild.id ? updatedChild : child
     ));
   };
 
+  const calculateAge = (dateOfBirth: string) => {
+    return differenceInYears(new Date(), new Date(dateOfBirth));
+  };
+
   return (
     <div className="space-y-4">
-      {children.map((child) => (
+      {childrenData.map((child) => (
         <ErrorBoundary key={child.id} errorComponent="inline">
           <div className="border rounded-lg p-4 bg-white shadow-sm">
             <div className="flex justify-between items-start">
@@ -41,10 +46,10 @@ function ChildListContent({ children, setChildren }: ChildListProps) {
                 <h3 className="text-lg font-medium text-gray-900">
                   {child.firstName} {child.lastName}
                 </h3>
-                <p className="text-sm text-gray-500">Age: {child.age}</p>
-                {child.allergies.length > 0 && (
+                <p className="text-sm text-gray-500">Age: {calculateAge(child.dateOfBirth)}</p>
+                {child.medicalInfo?.allergies?.length > 0 && (
                   <p className="text-sm text-gray-500 mt-1">
-                    Allergies: {child.allergies.join(', ')}
+                    Allergies: {child.medicalInfo.allergies.join(', ')}
                   </p>
                 )}
               </div>

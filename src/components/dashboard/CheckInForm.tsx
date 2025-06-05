@@ -214,10 +214,10 @@ function CheckInFormContent({ child, onComplete }: CheckInFormProps) {
             <svg className="h-5 w-5 text-green-400 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
             </svg>
-            <div>
+            <div className="ml-3">
               <h4 className="text-sm font-medium text-green-800">Currently Checked In</h4>
               <p className="mt-1 text-sm text-green-600">
-                Since {new Date(activeCheckIn.checkInTime).toLocaleString()}
+                Since {activeCheckIn.checkInTime.toDate().toLocaleString()}
               </p>
             </div>
           </div>

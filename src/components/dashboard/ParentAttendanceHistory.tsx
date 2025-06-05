@@ -1,87 +1,48 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { useState, useEffect, useCallback } from 'react';
+import { collection, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
-import { Child, CheckInRecord } from '@/types';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { format } from 'date-fns';
+import { AttendanceRecord } from '@/types';
 import toast from 'react-hot-toast';
 import { EditAttendanceModal } from './EditAttendanceModal';
 
-interface AttendanceRecord extends CheckInRecord {
-  childName?: string;
+interface AttendanceData {
+  [key: string]: AttendanceRecord[];
 }
 
 export function ParentAttendanceHistory() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [children, setChildren] = useState<Child[]>([]);
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [attendanceData, setAttendanceData] = useState<AttendanceData>({});
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
 
-  useEffect(() => {
+  const fetchChildrenAndAttendance = useCallback(async () => {
     if (!user?.uid) return;
-    fetchChildrenAndAttendance();
-  }, [user?.uid]);
 
-  const fetchChildrenAndAttendance = async () => {
     try {
       setLoading(true);
-      setError('');
+      setError(null);
 
-      // First, fetch all children for the parent
-      const childrenRef = collection(db, 'children');
-      const childrenQuery = query(childrenRef, where('parentId', '==', user?.uid));
-      const childrenSnapshot = await getDocs(childrenQuery);
-      const childrenData = childrenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Child));
-      setChildren(childrenData);
-
-      // Then, fetch all check-in records for these children
       const checkInsRef = collection(db, 'checkIns');
-      const childIds = childrenData.map(child => child.id);
-      const checkInsQuery = query(
+      const q = query(
         checkInsRef,
-        where('childId', 'in', childIds),
+        where('parentId', '==', user.uid),
         orderBy('checkInTime', 'desc')
       );
-      const checkInsSnapshot = await getDocs(checkInsQuery);
-      
-      // Combine check-in records with child names
-      const records = checkInsSnapshot.docs.map(doc => {
-        const data = doc.data();
-        const child = childrenData.find(c => c.id === data.childId);
-        return {
-          ...data,
-          id: doc.id,
-          childName: child ? `${child.firstName} ${child.lastName}` : 'Unknown Child',
-          // Ensure all required fields exist with default values
-          dropOffInfo: data.dropOffInfo || {
-            personName: '',
-            relationship: '',
-            signature: '',
-            notes: ''
-          },
-          pickUpInfo: data.pickUpInfo || null,
-          healthStatus: data.healthStatus || {
-            hasFever: false,
-            temperature: null,
-            symptoms: [],
-            medications: []
-          },
-          meals: data.meals || {
-            breakfast: false,
-            lunch: false,
-            snack: false
-          },
-          concerns: data.concerns || null
-        } as AttendanceRecord;
-      });
 
-      setAttendanceRecords(records);
+      const querySnapshot = await getDocs(q);
+      const records = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as AttendanceRecord[];
+
+      setAttendanceData({
+        [user.uid]: records
+      });
     } catch (err) {
       console.error('Error fetching attendance history:', err);
       setError('Failed to load attendance history');
@@ -89,12 +50,15 @@ export function ParentAttendanceHistory() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.uid]);
 
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'N/A';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return format(date, 'MMM d, yyyy h:mm a');
+  useEffect(() => {
+    fetchChildrenAndAttendance();
+  }, [fetchChildrenAndAttendance]);
+
+  const formatDate = (timestamp: Timestamp) => {
+    if (!timestamp) return '';
+    return timestamp.toDate().toLocaleString();
   };
 
   const handleEdit = (record: AttendanceRecord) => {
@@ -104,8 +68,8 @@ export function ParentAttendanceHistory() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[200px]">
-        <LoadingSpinner text="Loading attendance history..." />
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
@@ -113,7 +77,15 @@ export function ParentAttendanceHistory() {
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-700">{error}</p>
+        <p className="text-sm text-red-700">{error}</p>
+      </div>
+    );
+  }
+
+  if (!user?.uid || !attendanceData[user.uid]?.length) {
+    return (
+      <div className="bg-white shadow rounded-lg p-4">
+        <p className="text-gray-500 text-center">No attendance records found</p>
       </div>
     );
   }
@@ -123,7 +95,7 @@ export function ParentAttendanceHistory() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Attendance History</h2>
         <button
-          onClick={() => fetchChildrenAndAttendance()}
+          onClick={fetchChildrenAndAttendance}
           className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
           Refresh
@@ -159,7 +131,7 @@ export function ParentAttendanceHistory() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {attendanceRecords.map((record) => (
+              {user?.uid && attendanceData[user.uid]?.map((record) => (
                 <tr key={record.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {record.childName}
@@ -211,17 +183,19 @@ export function ParentAttendanceHistory() {
         </div>
       </div>
 
-      {attendanceRecords.length === 0 && (
-        <div className="text-center py-8 bg-white rounded-lg">
-          <p className="text-gray-500">No attendance records found</p>
-        </div>
-      )}
-
       {isEditModalOpen && selectedRecord && (
         <EditAttendanceModal
           record={selectedRecord}
           onClose={() => setIsEditModalOpen(false)}
-          onUpdate={fetchChildrenAndAttendance}
+          onUpdate={(updatedRecord) => {
+            setAttendanceData(prev => ({
+              ...prev,
+              [user.uid]: prev[user.uid].map(record =>
+                record.id === updatedRecord.id ? updatedRecord : record
+              )
+            }));
+            setIsEditModalOpen(false);
+          }}
         />
       )}
     </div>

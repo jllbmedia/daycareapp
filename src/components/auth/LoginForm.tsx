@@ -26,8 +26,8 @@ export function LoginForm() {
       setLoading(true);
       
       // Attempt login
-      const result = await login(data.email, data.password);
-      console.log('Login successful, user:', result.user.email);
+      await login(data.email, data.password);
+      console.log('Login successful');
       
       // Show success message
       setSuccess('Login successful! Redirecting to dashboard...');

@@ -25,7 +25,7 @@ interface Activity {
 export function DailyActivities({ childId }: DailyActivityProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activities] = useState<Activity[]>([]);
   const [newNote, setNewNote] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');

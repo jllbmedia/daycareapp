@@ -12,7 +12,6 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
   // Production optimizations
-  swcMinify: true,
   reactStrictMode: true,
   poweredByHeader: false,
   // Improve production performance

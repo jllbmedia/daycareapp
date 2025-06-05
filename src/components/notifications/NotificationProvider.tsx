@@ -14,17 +14,7 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
-
-interface Notification {
-  id: string;
-  type: 'message' | 'check-in' | 'check-out' | 'activity' | 'system';
-  title: string;
-  message: string;
-  timestamp: Date;
-  isRead: boolean;
-  recipientId: string;
-  data?: Record<string, any>;
-}
+import { Notification } from '@/types';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -34,7 +24,7 @@ interface NotificationContextType {
   clearNotifications: () => Promise<void>;
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificationContext = createContext<NotificationContextType | null>(null);
 
 export function useNotifications() {
   const context = useContext(NotificationContext);

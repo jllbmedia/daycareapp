@@ -1,7 +1,10 @@
+'use client';
+
 import { useState, useRef, useEffect } from 'react';
-import { useNotifications } from './NotificationProvider';
+import { Notification } from '@/types';
 import { format } from 'date-fns';
 import { useRouter } from 'next/router';
+import { useNotifications } from './NotificationProvider';
 
 export function NotificationBell() {
   const {
@@ -26,10 +29,9 @@ export function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleNotificationClick = async (notification: any) => {
+  const handleNotificationClick = async (notification: Notification) => {
     await markAsRead(notification.id);
 
-    // Navigate based on notification type
     switch (notification.type) {
       case 'message':
         router.push(`/dashboard/messages/${notification.data?.senderId}`);
@@ -42,7 +44,6 @@ export function NotificationBell() {
         router.push(`/dashboard/activities/${notification.data?.childId}`);
         break;
       default:
-        // Handle other notification types or do nothing
         break;
     }
 
@@ -175,4 +176,4 @@ function getNotificationIcon(type: string) {
         </div>
       );
   }
-} 
+}

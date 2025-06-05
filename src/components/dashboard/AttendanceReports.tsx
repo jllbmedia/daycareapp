@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { collection, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns'; // ✅ Only once, all together
+import { format, startOfDay, subDays } from 'date-fns'; // ✅ Only once, all together
 import { db } from '@/lib/firebase';
 import { Child, CheckInRecord } from '@/types';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -30,11 +30,7 @@ export function AttendanceReports() {
   const [dateRange, setDateRange] = useState<'week' | 'month'>('week');
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchAttendanceData();
-  }, [dateRange]);
-
-  const fetchAttendanceData = async () => {
+  const fetchAttendanceData = useCallback(async () => {
     try {
       setLoading(true);
       const days = dateRange === 'week' ? 7 : 30;
@@ -116,7 +112,11 @@ export function AttendanceReports() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange]);
+
+  useEffect(() => {
+    fetchAttendanceData();
+  }, [fetchAttendanceData]);
 
   if (loading) {
     return (

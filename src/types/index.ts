@@ -1,27 +1,79 @@
-export interface Child {
+import { Timestamp } from 'firebase/firestore';
+
+export interface FirebaseTimestamp {
+  seconds: number;
+  nanoseconds: number;
+}
+
+export interface FirestoreDocument {
   id: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Child extends FirestoreDocument {
   firstName: string;
   lastName: string;
   dateOfBirth: string;
-  age: number;
   parentId: string;
-  allergies: string[];
-  createdAt: any;
-  updatedAt: any;
+  emergencyContacts: EmergencyContact[];
+  medicalInfo: MedicalInfo;
 }
 
 export interface EmergencyContact {
   name: string;
   relationship: string;
   phone: string;
+  email: string;
+}
+
+export interface MedicalInfo {
+  allergies: string[];
+  medications: string[];
+  conditions: string[];
+  notes: string;
+}
+
+export interface AttendanceRecord extends FirestoreDocument {
+  childId: string;
+  checkInTime: FirebaseTimestamp;
+  checkOutTime?: FirebaseTimestamp;
+  status: 'checked-in' | 'checked-out';
+  notes?: string;
+}
+
+export interface DailyActivity extends FirestoreDocument {
+  childId: string;
+  timestamp: FirebaseTimestamp;
+  type: 'meal' | 'nap' | 'activity' | 'incident' | 'medication';
+  description: string;
+  notes?: string;
+}
+
+export interface Message extends FirestoreDocument {
+  senderId: string;
+  recipientId: string;
+  content: string;
+  timestamp: FirebaseTimestamp;
+  read: boolean;
+}
+
+export interface Notification extends FirestoreDocument {
+  userId: string;
+  type: 'info' | 'warning' | 'error' | 'success';
+  title: string;
+  message: string;
+  timestamp: FirebaseTimestamp;
+  read: boolean;
+  link?: string;
 }
 
 export interface CheckInRecord {
   id: string;
   childId: string;
   parentId: string;
-  checkInTime: any;
-  checkOutTime: any | null;
+  checkInTime: Timestamp;
+  checkOutTime: Timestamp | null;
   dropOffInfo: {
     personName: string;
     relationship: string;
@@ -33,7 +85,7 @@ export interface CheckInRecord {
     relationship: string;
     signature: string;
     notes: string;
-    time: any;
+    time: Timestamp;
   };
   healthStatus: {
     hasFever: boolean;
@@ -52,9 +104,9 @@ export interface CheckInRecord {
     relationship: string;
     phone: string;
   } | null;
-  createdAt: any;
+  createdAt: Timestamp;
   createdBy: string;
-  updatedAt?: any;
+  updatedAt?: Timestamp;
   updatedBy?: string;
 }
 
@@ -65,4 +117,20 @@ export interface Parent {
   email: string;
   phone: string;
   children: string[]; // Array of child IDs
+}
+
+export interface UserData extends FirestoreDocument {
+  email: string;
+  displayName?: string;
+  role: 'parent' | 'staff' | 'admin';
+  settings: {
+    notifications: boolean;
+    theme: 'light' | 'dark' | 'system';
+  };
+}
+
+export interface FirestoreError {
+  code: string;
+  message: string;
+  name: string;
 } 

@@ -3,9 +3,14 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/contexts/AuthContext';
+import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
 import { Child } from '@/types';
+import { toast } from 'react-hot-toast';
+
+interface AddChildFormProps {
+  setChildren: React.Dispatch<React.SetStateAction<Child[]>>;
+}
 
 interface AddChildFormInputs {
   firstName: string;
@@ -17,69 +22,73 @@ interface AddChildFormInputs {
   emergencyContactPhone: string;
 }
 
-interface AddChildFormProps {
-  setChildren: React.Dispatch<React.SetStateAction<Child[]>>;
-}
-
 export function AddChildForm({ setChildren }: AddChildFormProps) {
   const { user } = useAuth();
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { register, handleSubmit, reset, formState: { errors } } = useForm<AddChildFormInputs>();
 
-  const calculateAge = (dob: string): number => {
-    const birthDate = new Date(dob);
-    const ageDiff = Date.now() - birthDate.getTime();
-    return Math.floor(ageDiff / (1000 * 60 * 60 * 24 * 365.25));
-  };
+  const onSubmit = async (formData: AddChildFormInputs) => {
+    if (!user) {
+      toast.error('You must be logged in to add a child');
+      return;
+    }
 
-  const onSubmit = async (data: AddChildFormInputs) => {
     try {
-      setError('');
+      setLoading(true);
 
-      const allergiesArray = data.allergies
-        ? data.allergies.split(',').map(allergy => allergy.trim())
+      // Format the allergies array
+      const allergiesArray = formData.allergies
+        ? formData.allergies.split(',').map(allergy => allergy.trim())
         : [];
 
+      // Structure the child data for Firestore
       const childData = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        dateOfBirth: data.dateOfBirth,
-        parentId: user?.uid ?? '', // ✅ Ensures it's always a string
-        allergies: allergiesArray,
-        emergencyContacts: [
-          {
-            name: data.emergencyContactName,
-            relationship: data.emergencyContactRelationship,
-            phone: data.emergencyContactPhone,
-          },
-        ],
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        dateOfBirth: formData.dateOfBirth,
+        parentId: user.uid,
+        emergencyContacts: [{
+          name: formData.emergencyContactName,
+          relationship: formData.emergencyContactRelationship,
+          phone: formData.emergencyContactPhone,
+          email: '' // Add a default empty email as it's required by the type
+        }],
+        medicalInfo: {
+          allergies: allergiesArray,
+          medications: [],
+          conditions: [],
+          notes: ''
+        },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       };
 
       const docRef = await addDoc(collection(db, 'children'), childData);
 
+      // Create a new child object with proper Timestamp objects
+      const now = Timestamp.now();
       const newChild: Child = {
-        id: docRef.id,
         ...childData,
-        age: calculateAge(childData.dateOfBirth),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        id: docRef.id,
+        createdAt: now,
+        updatedAt: now
       };
 
-      setChildren(prev => [...prev, newChild]);
+      setChildren((prevChildren: Child[]) => [...prevChildren, newChild]);
+      
+      // Reset the form
       reset();
-    } catch (err) {
-      setError('Failed to add child.');
+      toast.success('Child added successfully');
+    } catch (error) {
+      console.error('Error adding child:', error);
+      toast.error('Failed to add child. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow rounded-lg p-6">
-      {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-4">
-          <div className="text-sm text-red-700">{error}</div>
-        </div>
-      )}
-
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -87,9 +96,9 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
               First Name
             </label>
             <input
-              {...register('firstName', { required: 'First name is required' })}
               type="text"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900"
+              {...register('firstName', { required: 'First name is required' })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
             {errors.firstName && (
               <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
@@ -101,9 +110,9 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
               Last Name
             </label>
             <input
-              {...register('lastName', { required: 'Last name is required' })}
               type="text"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900"
+              {...register('lastName', { required: 'Last name is required' })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
             {errors.lastName && (
               <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
@@ -116,9 +125,9 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
             Date of Birth
           </label>
           <input
-            {...register('dateOfBirth', { required: 'Date of birth is required' })}
             type="date"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900"
+            {...register('dateOfBirth', { required: 'Date of birth is required' })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           />
           {errors.dateOfBirth && (
             <p className="mt-1 text-sm text-red-600">{errors.dateOfBirth.message}</p>
@@ -130,24 +139,23 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
             Allergies (comma-separated)
           </label>
           <input
-            {...register('allergies')}
             type="text"
+            {...register('allergies')}
             placeholder="e.g., peanuts, milk, eggs"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           />
         </div>
 
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-gray-900">Emergency Contact</h3>
-
           <div>
             <label htmlFor="emergencyContactName" className="block text-sm font-medium text-gray-700">
               Name
             </label>
             <input
-              {...register('emergencyContactName', { required: 'Emergency contact name is required' })}
               type="text"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900"
+              {...register('emergencyContactName', { required: 'Emergency contact name is required' })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
             {errors.emergencyContactName && (
               <p className="mt-1 text-sm text-red-600">{errors.emergencyContactName.message}</p>
@@ -159,9 +167,9 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
               Relationship
             </label>
             <input
-              {...register('emergencyContactRelationship', { required: 'Relationship is required' })}
               type="text"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900"
+              {...register('emergencyContactRelationship', { required: 'Relationship is required' })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
             {errors.emergencyContactRelationship && (
               <p className="mt-1 text-sm text-red-600">{errors.emergencyContactRelationship.message}</p>
@@ -170,33 +178,42 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
 
           <div>
             <label htmlFor="emergencyContactPhone" className="block text-sm font-medium text-gray-700">
-              Phone Number
+              Phone
             </label>
             <input
-              {...register('emergencyContactPhone', {
-                required: 'Phone number is required',
-                pattern: {
-                  value: /^\+?[\d\s-]+$/,
-                  message: 'Invalid phone number',
-                },
-              })}
               type="tel"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900"
+              {...register('emergencyContactPhone', { required: 'Phone number is required' })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
             {errors.emergencyContactPhone && (
               <p className="mt-1 text-sm text-red-600">{errors.emergencyContactPhone.message}</p>
             )}
           </div>
         </div>
+      </div>
 
-        <div className="pt-4">
-          <button
-            type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Add Child
-          </button>
-        </div>
+      <div>
+        <button
+          type="submit"
+          disabled={loading}
+          className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+            loading 
+              ? 'bg-indigo-400 cursor-not-allowed'
+              : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+          }`}
+        >
+          {loading ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Adding Child...
+            </>
+          ) : (
+            'Add Child'
+          )}
+        </button>
       </div>
     </form>
   );

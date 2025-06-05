@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Child, CheckInRecord } from '@/types';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
@@ -10,7 +10,6 @@ import toast from 'react-hot-toast';
 
 interface BulkCheckInOutProps {
   parentId: string;
-  onComplete: () => void;
 }
 
 interface ChildStatus {
@@ -20,18 +19,14 @@ interface ChildStatus {
   selected: boolean;
 }
 
-export function BulkCheckInOut({ parentId, onComplete }: BulkCheckInOutProps) {
+export function BulkCheckInOut({ parentId }: BulkCheckInOutProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [children, setChildren] = useState<ChildStatus[]>([]);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchChildren();
-  }, [parentId]);
-
-  const fetchChildren = async () => {
+  const fetchChildren = useCallback(async () => {
     try {
       setLoading(true);
       // Fetch all children for the parent
@@ -74,7 +69,11 @@ export function BulkCheckInOut({ parentId, onComplete }: BulkCheckInOutProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [parentId]);
+
+  useEffect(() => {
+    fetchChildren();
+  }, [fetchChildren]);
 
   const handleSelectAll = (selected: boolean) => {
     setChildren(prev => prev.map(child => ({ ...child, selected })));

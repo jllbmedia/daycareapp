@@ -4,64 +4,42 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { FirebaseError } from 'firebase/app';
 
 interface RegisterFormInputs {
-  firstName: string;
-  lastName: string;
   email: string;
   password: string;
   confirmPassword: string;
+  firstName: string;
+  lastName: string;
   phone: string;
 }
 
 export function RegisterForm() {
-  const { signup } = useAuth();
+  const { signUp } = useAuth();
   const router = useRouter();
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterFormInputs>();
   const password = watch('password');
 
   const onSubmit = async (data: RegisterFormInputs) => {
+    if (data.password !== data.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     try {
       setError('');
-      setLoading(true);
-      console.log('Attempting signup for:', data.email);
-      
-      // Create the user in Firebase Auth
-      const userCredential = await signup(data.email, data.password);
-      const user = userCredential.user;
-      console.log('User created successfully:', user.email);
-
-      // Initialize the parent document in Firestore
-      console.log('Creating parent profile...');
-      await setDoc(doc(db, 'parents', user.uid), {
-        id: user.uid,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        phone: data.phone,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-      console.log('Parent profile created successfully');
-
-      // Navigate to dashboard
-      console.log('Registration complete, redirecting to dashboard...');
-      router.refresh();
+      await signUp(data.email, data.password);
       router.push('/dashboard');
     } catch (err) {
-      console.error('Registration error:', err);
       if (err instanceof FirebaseError) {
         switch (err.code) {
           case 'auth/email-already-in-use':
-            setError('This email is already registered. Please try logging in instead.');
+            setError('An account with this email already exists');
             break;
           case 'auth/invalid-email':
-            setError('Invalid email address.');
+            setError('Invalid email address');
             break;
           case 'auth/operation-not-allowed':
             setError('Email/password accounts are not enabled. Please contact support.');
@@ -70,13 +48,11 @@ export function RegisterForm() {
             setError('Password is too weak. Please use a stronger password.');
             break;
           default:
-            setError(`Failed to create an account: ${err.message}`);
+            setError(`Registration failed: ${err.message}`);
         }
       } else {
         setError('An unexpected error occurred. Please try again.');
       }
-    } finally {
-      setLoading(false);
     }
   };
 

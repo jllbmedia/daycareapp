@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 export function Navbar() {
-  const { user, loading, logout } = useAuth();
+  const { user, logout } = useAuth();
   const pathname = usePathname();
 
   const handleLogout = async () => {
