@@ -107,7 +107,7 @@ export function CheckInHistoryContent({ child, onClose }: CheckInHistoryProps) {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {checkIns.map((record) => (
+          {checkIns.map((record) => (
                 <tr key={record.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatDisplayDate(record.checkInTime)}
@@ -131,4 +131,4 @@ export function CheckInHistory(props: CheckInHistoryProps) {
       <CheckInHistoryContent {...props} />
     </ErrorBoundary>
   );
-}
+} 

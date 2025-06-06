@@ -5,6 +5,48 @@ rules_version = '2';
 //    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
 service firebase.storage {
   match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isStaff() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'staff';
+    }
+
+    // Profile images
+    match /profiles/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+        (request.auth.uid == userId || isAdmin()) &&
+        request.resource.size < 5 * 1024 * 1024 && // 5MB max
+        request.resource.contentType.matches('image/.*');
+    }
+
+    // Activity photos
+    match /activities/{activityId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+        (isStaff() || isAdmin()) &&
+        request.resource.size < 10 * 1024 * 1024 && // 10MB max
+        request.resource.contentType.matches('image/.*');
+    }
+
+    // Documents (medical records, forms, etc.)
+    match /documents/{userId}/{fileName} {
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == userId || isStaff() || isAdmin());
+      allow write: if isAuthenticated() && 
+        (request.auth.uid == userId || isAdmin()) &&
+        request.resource.size < 20 * 1024 * 1024 && // 20MB max
+        request.resource.contentType.matches('application/pdf|image/.*');
+    }
+
+    // Default deny
     match /{allPaths=**} {
       allow read, write: if false;
     }

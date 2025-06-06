@@ -54,7 +54,7 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
           email: '' // Add a default empty email as it's required by the type
         }],
         medicalInfo: {
-          allergies: allergiesArray,
+        allergies: allergiesArray,
           medications: [],
           conditions: [],
           notes: ''
@@ -189,12 +189,12 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
               <p className="mt-1 text-sm text-red-600">{errors.emergencyContactPhone.message}</p>
             )}
           </div>
+          </div>
         </div>
-      </div>
 
       <div>
-        <button
-          type="submit"
+          <button
+            type="submit"
           disabled={loading}
           className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
             loading 
@@ -213,7 +213,7 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
           ) : (
             'Add Child'
           )}
-        </button>
+          </button>
       </div>
     </form>
   );

@@ -36,7 +36,7 @@ export function ParentAttendanceHistory() {
 
       const querySnapshot = await getDocs(q);
       const records = querySnapshot.docs.map(doc => ({
-        id: doc.id,
+          id: doc.id,
         ...doc.data()
       })) as AttendanceRecord[];
 

@@ -25,25 +25,25 @@ export function Messaging({ recipientId, recipientName }: MessagingProps) {
     const fetchMessages = async () => {
       try {
         setLoading(true);
-        const messagesRef = collection(db, 'messages');
-        const q = query(
-          messagesRef,
-          where('participants', 'array-contains', user.uid),
+    const messagesRef = collection(db, 'messages');
+    const q = query(
+      messagesRef,
+      where('participants', 'array-contains', user.uid),
           orderBy('createdAt', 'desc')
-        );
+    );
 
         const querySnapshot = await getDocs(q);
         const fetchedMessages = querySnapshot.docs.map(doc => ({
-          id: doc.id,
+        id: doc.id,
           ...doc.data()
-        })) as Message[];
+      })) as Message[];
 
         setMessages(fetchedMessages);
       } catch (error) {
         console.error('Error fetching messages:', error);
         toast.error('Failed to load messages');
       } finally {
-        setLoading(false);
+      setLoading(false);
       }
     };
 
@@ -95,17 +95,17 @@ export function Messaging({ recipientId, recipientName }: MessagingProps) {
           </div>
         ) : (
           messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex ${message.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}
+          >
             <div
-              key={message.id}
-              className={`flex ${message.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
                 className={`max-w-xs md:max-w-md p-3 rounded-lg ${
-                  message.senderId === user?.uid
-                    ? 'bg-indigo-600 text-white'
+                message.senderId === user?.uid
+                  ? 'bg-indigo-600 text-white'
                     : 'bg-gray-200 text-gray-900'
-                }`}
-              >
+              }`}
+            >
                 <p>{message.content}</p>
                 <p className="text-xs mt-1 opacity-75">
                   {message.createdAt?.toDate().toLocaleString()}
