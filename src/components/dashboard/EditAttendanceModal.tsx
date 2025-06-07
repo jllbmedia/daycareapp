@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, updateDoc, Timestamp, Firestore } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { CheckInRecord } from '@/types';
@@ -47,6 +47,17 @@ export function EditAttendanceModal({ record, onClose, onUpdate }: EditAttendanc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!db) {
+      toast.error('Database not initialized');
+      return;
+    }
+
+    if (!user) {
+      toast.error('User not authenticated');
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -61,10 +72,13 @@ export function EditAttendanceModal({ record, onClose, onUpdate }: EditAttendanc
         meals: formData.meals,
         concerns: formData.concerns || null,
         updatedAt: Timestamp.now(),
-        updatedBy: user?.uid,
+        updatedBy: user.uid,
       };
 
-      await updateDoc(doc(db, 'checkIns', record.id), updateData);
+      const firestore = db as Firestore;
+      const docRef = doc(firestore, 'checkIns', record.id);
+      await updateDoc(docRef, updateData);
+      
       toast.success('Attendance record updated successfully');
       onUpdate({
         ...record,
@@ -204,16 +218,23 @@ export function EditAttendanceModal({ record, onClose, onUpdate }: EditAttendanc
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
-              {loading ? <LoadingSpinner size="sm" /> : 'Save Changes'}
+              {loading ? (
+                <>
+                  <LoadingSpinner size="sm" variant="white" />
+                  <span className="ml-2">Updating...</span>
+                </>
+              ) : (
+                'Update Record'
+              )}
             </button>
           </div>
         </form>
