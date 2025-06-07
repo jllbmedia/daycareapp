@@ -1,7 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Daycare Management Application
+## by Juan LLerena @ JLLBMedia v2.1
+
+A comprehensive daycare management system built with modern web technologies. This application helps daycare providers manage children's attendance, daily activities, and parent communications efficiently.
+
+## Tech Stack
+
+### Frontend
+- **Framework**: [Next.js](https://nextjs.org) 15.3.3 with App Router
+- **Language**: TypeScript 5.3.3
+- **UI Components**:
+  - React 18.2.0
+  - @headlessui/react for accessible UI components
+  - @heroicons/react for icons
+  - Tailwind CSS for styling
+
+### Backend & Database
+- **Backend**: Firebase/Firestore
+- **Authentication**: Firebase Auth
+- **Database**: Cloud Firestore
+- **Hosting**: Vercel
+
+### Form Handling & Validation
+- react-hook-form for form management
+- yup & zod for schema validation
+- @hookform/resolvers for form validation
+
+### State Management & Data Fetching
+- React Context for global state
+- react-firebase-hooks for Firebase integration
+- Custom hooks for business logic
+
+### Development Tools
+- ESLint for code linting
+- TypeScript for type safety
+- Tailwind CSS for styling
+- PostCSS & Autoprefixer for CSS processing
+
+### Key Features
+- Real-time updates with Firestore
+- Type-safe database operations
+- Responsive design
+- Error boundaries for reliability
+- Toast notifications for user feedback
+- Comprehensive type definitions
+- Modular component architecture
 
 ## Getting Started
-## by Juan LLerena @ JLLBMedia v2.1
 
 First, run the development server:
 
