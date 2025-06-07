@@ -66,6 +66,7 @@ export default function DashboardPage() {
 
     const fetchChildren = async () => {
       try {
+        if (!db) throw new Error('Firestore is not initialized');
         console.log('Fetching children for user:', user.uid);
         const childrenRef = collection(db, 'children');
         const q = query(childrenRef, where('parentId', '==', user.uid));
@@ -73,8 +74,7 @@ export default function DashboardPage() {
         const childrenData = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        })) as Child[];
-        console.log('Children fetched:', childrenData.length);
+        }));
         setChildren(childrenData);
       } catch (error) {
         console.error('Error fetching children:', error);

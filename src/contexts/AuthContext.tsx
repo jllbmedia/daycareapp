@@ -9,15 +9,16 @@ import {
   onAuthStateChanged,
   getAuth,
   setPersistence,
-  browserLocalPersistence
+  browserLocalPersistence,
+  UserCredential
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth as firebaseAuth } from '@/lib/firebase';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<UserCredential>;
+  login: (email: string, password: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
 }
 
@@ -32,7 +33,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const auth = getAuth();
+    // Only run auth state listener on client side
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+
+    const auth = firebaseAuth || getAuth();
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
     
     // Set persistence to LOCAL
     setPersistence(auth, browserLocalPersistence)
@@ -72,17 +83,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string) => {
-    const result = await createUserWithEmailAndPassword(auth, email, password);
-    return result;
+  const signUp = async (email: string, password: string): Promise<UserCredential> => {
+    const auth = firebaseAuth || getAuth();
+    if (!auth) throw new Error('Firebase auth is not initialized');
+    return createUserWithEmailAndPassword(auth, email, password);
   };
 
-  const login = async (email: string, password: string) => {
-    const result = await signInWithEmailAndPassword(auth, email, password);
-    return result;
+  const login = async (email: string, password: string): Promise<UserCredential> => {
+    const auth = firebaseAuth || getAuth();
+    if (!auth) throw new Error('Firebase auth is not initialized');
+    return signInWithEmailAndPassword(auth, email, password);
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
+    const auth = firebaseAuth || getAuth();
+    if (!auth) throw new Error('Firebase auth is not initialized');
+
     try {
       // Clear the session cookie first
       await fetch('/api/auth/session', {
@@ -93,15 +109,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signOut(auth);
       
       // Clear any local storage or session storage data
-      localStorage.clear();
-      sessionStorage.clear();
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
     } catch (error) {
       console.error('Error during logout:', error);
       throw error;
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     loading,
     signUp,

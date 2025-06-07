@@ -3,8 +3,14 @@ import {
   collection,
   addDoc,
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  Firestore
 } from 'firebase/firestore';
+
+// Type guard to check if db is initialized
+function isFirestoreInitialized(db: Firestore | null): db is Firestore {
+  return db !== null;
+}
 
 const testData = {
   parent: {
@@ -126,6 +132,11 @@ const testData = {
 };
 
 async function seedTestData() {
+  if (!isFirestoreInitialized(db)) {
+    console.error('Firestore is not initialized');
+    process.exit(1);
+  }
+
   try {
     // Add children
     for (const child of testData.children) {
@@ -155,6 +166,7 @@ async function seedTestData() {
     console.log('Test data seeded successfully!');
   } catch (error) {
     console.error('Error seeding test data:', error);
+    process.exit(1);
   }
 }
 
