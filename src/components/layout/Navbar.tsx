@@ -24,7 +24,7 @@ export function Navbar() {
   }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white shadow-md z-50">
+    <nav className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-md z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Brand Name */}
@@ -32,14 +32,15 @@ export function Navbar() {
             <Link href="/" className="flex items-center space-x-3">
               <div className="relative w-8 h-8">
                 <Image
-                  src="/images/logo.png"
+                  src="/images/logo.svg"
                   alt="Daycare Logo"
-                  fill
+                  width={32}
+                  height={32}
                   className="object-contain"
                   priority
                 />
               </div>
-              <span className="text-xl font-bold text-indigo-600">Daycare App</span>
+              <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">Daycare App</span>
             </Link>
           </div>
 
@@ -51,18 +52,18 @@ export function Navbar() {
                   href="/dashboard"
                   className={`px-3 py-2 rounded-md text-sm font-medium ${
                     pathname === '/dashboard'
-                      ? 'text-indigo-600 bg-indigo-50'
-                      : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50'
+                      ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/50'
+                      : 'text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   Dashboard
                 </Link>
-                <div className="h-4 w-px bg-gray-200" />
+                <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
                 <div className="flex items-center space-x-4">
-                  <span className="text-sm text-gray-600">{user.email}</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">{user.email}</span>
                   <button
                     onClick={handleLogout}
-                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
                   >
                     Logout
                   </button>
@@ -76,7 +77,7 @@ export function Navbar() {
             {user && (
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
               >
                 Logout
               </button>
