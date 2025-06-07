@@ -12,7 +12,8 @@ import {
   updateDoc,
   doc,
   serverTimestamp,
-  DocumentData
+  DocumentData,
+  Firestore
 } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -26,19 +27,19 @@ interface NotificationContextType {
   clearNotifications: () => Promise<void>;
 }
 
-const NotificationContext = createContext<NotificationContextType | null>(null);
-
-export function useNotifications() {
-  const context = useContext(NotificationContext);
-  if (context === undefined) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
-  }
-  return context;
-}
-
 interface NotificationProviderProps {
   children: ReactNode;
 }
+
+const NotificationContext = createContext<NotificationContextType | null>(null);
+
+export const useNotifications = () => {
+  const context = useContext(NotificationContext);
+  if (!context) {
+    throw new Error('useNotifications must be used within a NotificationProvider');
+  }
+  return context;
+};
 
 export function NotificationProvider({ children }: NotificationProviderProps) {
   const { user } = useAuth();
@@ -46,10 +47,11 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid || !db) return;
 
+    const firestore = db as Firestore;
     // Subscribe to notifications
-    const notificationsRef = collection(db, 'notifications');
+    const notificationsRef = collection(firestore, 'notifications');
     const q = query(
       notificationsRef,
       where('recipientId', '==', user.uid),
@@ -98,10 +100,11 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   };
 
   const markAsRead = async (notificationId: string) => {
-    if (!user?.uid) return;
+    if (!user?.uid || !db) return;
 
     try {
-      const notificationRef = doc(db, 'notifications', notificationId);
+      const firestore = db as Firestore;
+      const notificationRef = doc(firestore, 'notifications', notificationId);
       await updateDoc(notificationRef, {
         read: true,
         updatedAt: serverTimestamp(),
@@ -113,13 +116,14 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   };
 
   const markAllAsRead = async () => {
-    if (!user?.uid) return;
+    if (!user?.uid || !db) return;
 
     try {
+      const firestore = db as Firestore;
       const unreadNotifications = notifications.filter(n => !n.read);
       await Promise.all(
         unreadNotifications.map(notification =>
-          updateDoc(doc(db, 'notifications', notification.id), {
+          updateDoc(doc(firestore, 'notifications', notification.id), {
             read: true,
             updatedAt: serverTimestamp(),
           })
@@ -133,13 +137,14 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   };
 
   const clearNotifications = async () => {
-    if (!user?.uid) return;
+    if (!user?.uid || !db) return;
 
     try {
+      const firestore = db as Firestore;
       const readNotifications = notifications.filter(n => n.read);
       await Promise.all(
         readNotifications.map(notification =>
-          updateDoc(doc(db, 'notifications', notification.id), {
+          updateDoc(doc(firestore, 'notifications', notification.id), {
             archived: true,
             updatedAt: serverTimestamp(),
           })
