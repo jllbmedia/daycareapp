@@ -26,8 +26,8 @@ export default function TestPage() {
       conditions: [],
       notes: ''
     },
-    createdAt: new Date(),
-    updatedAt: new Date()
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now()
   };
 
   return (
