@@ -7,6 +7,7 @@ import { CheckInHistory } from './CheckInHistory';
 import { EditChildForm } from './EditChildForm';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { differenceInYears } from 'date-fns';
+import { Modal } from '@/components/ui/Modal';
 
 interface ChildListProps {
   childrenData: Child[];
@@ -17,6 +18,7 @@ function ChildListContent({ childrenData, setChildren }: ChildListProps) {
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [showHistory, setShowHistory] = useState<Child | null>(null);
   const [editingChild, setEditingChild] = useState<Child | null>(null);
+  const [showCheckInForm, setShowCheckInForm] = useState<Child | null>(null);
 
   if (childrenData.length === 0) {
     return (
@@ -67,32 +69,40 @@ function ChildListContent({ childrenData, setChildren }: ChildListProps) {
                   History
                 </button>
                 <button
-                  onClick={() => setSelectedChild(child)}
+                  onClick={() => setShowCheckInForm(child)}
                   className="px-3 py-1 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded"
                 >
                   Check In/Out
                 </button>
               </div>
             </div>
-
-            {selectedChild?.id === child.id && (
-              <div className="mt-4">
-                <ErrorBoundary errorComponent="inline">
-                  <CheckInForm child={child} onComplete={() => setSelectedChild(null)} />
-                </ErrorBoundary>
-              </div>
-            )}
           </div>
         </ErrorBoundary>
       ))}
 
+      {showCheckInForm && (
+        <Modal
+          isOpen={!!showCheckInForm}
+          onClose={() => setShowCheckInForm(null)}
+          title={`Check In/Out - ${showCheckInForm.firstName}`}
+        >
+          <CheckInForm
+            child={showCheckInForm}
+          />
+        </Modal>
+      )}
+
       {showHistory && (
-        <ErrorBoundary errorComponent="modal">
+        <Modal
+          isOpen={!!showHistory}
+          onClose={() => setShowHistory(null)}
+          title={`Check-in History - ${showHistory.firstName}`}
+        >
           <CheckInHistory
             child={showHistory}
-            onClose={() => setShowHistory(null)}
+            limit={10}
           />
-        </ErrorBoundary>
+        </Modal>
       )}
 
       {editingChild && (

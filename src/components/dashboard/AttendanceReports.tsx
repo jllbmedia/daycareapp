@@ -29,27 +29,31 @@ export function AttendanceReports() {
   const [dailyData, setDailyData] = useState<AttendanceData[]>([]);
   const [childrenStats, setChildrenStats] = useState<ChildAttendance[]>([]);
   const [dateRange, setDateRange] = useState<'week' | 'month'>('week');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
   const fetchAttendanceData = useCallback(async () => {
     if (!user) return;
     
     try {
+      if (!db) throw new Error('Firestore is not initialized');
       setLoading(true);
+      setError(null);
+
       const days = dateRange === 'week' ? 7 : 30;
       const startDate = startOfDay(subDays(new Date(), days));
+      const endDate = new Date();
       
       // Fetch all check-ins for the period
       const checkInsRef = collection(db, 'checkIns');
       const q = query(
         checkInsRef,
         where('checkInTime', '>=', Timestamp.fromDate(startDate)),
-        orderBy('checkInTime', 'desc')
+        where('checkInTime', '<=', Timestamp.fromDate(endDate))
       );
       
-      const checkInsSnapshot = await getDocs(q);
-      const checkIns = checkInsSnapshot.docs.map(doc => ({
+      const querySnapshot = await getDocs(q);
+      const records = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as CheckInRecord[];
@@ -68,7 +72,7 @@ export function AttendanceReports() {
       const dailyMap = new Map<string, AttendanceData>();
       const childAttendance = new Map<string, ChildAttendance>();
 
-      checkIns.forEach(checkIn => {
+      records.forEach(checkIn => {
         const child = children.get(checkIn.childId);
         if (!child) return;
 
@@ -110,8 +114,8 @@ export function AttendanceReports() {
 
       setDailyData(Array.from(dailyMap.values()));
       setChildrenStats(Array.from(childAttendance.values()));
-    } catch (err) {
-      console.error('Error fetching attendance data:', err);
+    } catch (error) {
+      console.error('Error fetching attendance data:', error);
       setError('Failed to load attendance data');
     } finally {
       setLoading(false);

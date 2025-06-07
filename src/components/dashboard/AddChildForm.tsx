@@ -28,12 +28,10 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<AddChildFormInputs>();
 
   const onSubmit = async (formData: AddChildFormInputs) => {
-    if (!user) {
-      toast.error('You must be logged in to add a child');
-      return;
-    }
-
     try {
+      if (!db) throw new Error('Firestore is not initialized');
+      if (!user) throw new Error('User is not authenticated');
+
       setLoading(true);
 
       // Format the allergies array
@@ -54,7 +52,7 @@ export function AddChildForm({ setChildren }: AddChildFormProps) {
           email: '' // Add a default empty email as it's required by the type
         }],
         medicalInfo: {
-        allergies: allergiesArray,
+          allergies: allergiesArray,
           medications: [],
           conditions: [],
           notes: ''

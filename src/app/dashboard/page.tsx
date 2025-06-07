@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Child } from '@/types';
+import { Child, EmergencyContact, MedicalInfo } from '@/types';
 import { ChildList } from '@/components/dashboard/ChildList';
 import { AddChildForm } from '@/components/dashboard/AddChildForm';
 import { ParentAttendanceHistory } from '@/components/dashboard/ParentAttendanceHistory';
@@ -71,10 +71,28 @@ export default function DashboardPage() {
         const childrenRef = collection(db, 'children');
         const q = query(childrenRef, where('parentId', '==', user.uid));
         const querySnapshot = await getDocs(q);
-        const childrenData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        
+        const childrenData = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          const child: Child = {
+            id: doc.id,
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            dateOfBirth: data.dateOfBirth || '',
+            parentId: data.parentId || user.uid,
+            emergencyContacts: (data.emergencyContacts || []) as EmergencyContact[],
+            medicalInfo: (data.medicalInfo || {
+              allergies: [],
+              medications: [],
+              conditions: [],
+              notes: ''
+            }) as MedicalInfo,
+            createdAt: data.createdAt as Timestamp || Timestamp.now(),
+            updatedAt: data.updatedAt as Timestamp || Timestamp.now()
+          };
+          return child;
+        });
+        
         setChildren(childrenData);
       } catch (error) {
         console.error('Error fetching children:', error);

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, where, getDocs, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, updateDoc, doc, serverTimestamp, Timestamp, Firestore } from 'firebase/firestore';
 import { Child, CheckInRecord } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 
 interface CheckInFormProps {
   child: Child;
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
 interface CheckInFormInputs {
@@ -44,90 +44,139 @@ interface CheckInFormInputs {
 function CheckInFormContent({ child, onComplete }: CheckInFormProps) {
   const { user } = useAuth();
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [activeCheckIn, setActiveCheckIn] = useState<CheckInRecord | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [checkOutData, setCheckOutData] = useState<CheckInFormInputs | null>(null);
   const { register, handleSubmit, watch, formState: { errors } } = useForm<CheckInFormInputs>();
   const hasFever = watch('hasFever');
 
-  // Check for active check-in on component mount
-  useEffect(() => {
-    const fetchActiveCheckIn = async () => {
-      try {
-        console.log('Fetching active check-in for child:', child.id);
-        const checkInsRef = collection(db, 'checkIns');
-        const q = query(
-          checkInsRef,
-          where('childId', '==', child.id),
-          where('checkOutTime', '==', null)
-        );
-        const querySnapshot = await getDocs(q);
-        console.log('Query results:', querySnapshot.size, 'documents found');
-        if (!querySnapshot.empty) {
-          const checkInData = {
-            id: querySnapshot.docs[0].id,
-            ...querySnapshot.docs[0].data()
-          } as CheckInRecord;
-          setActiveCheckIn(checkInData);
-          console.log('Active check-in found:', checkInData);
-        }
-      } catch (error) {
-        console.error('Error fetching active check-in:', error);
-        setError('Error checking current status: ' + (error instanceof Error ? error.message : String(error)));
-      }
-    };
+  const fetchActiveCheckIn = useCallback(async () => {
+    if (!db) {
+      console.error('Firestore is not initialized');
+      toast.error('Failed to load check-in status');
+      setLoading(false);
+      return;
+    }
 
-    fetchActiveCheckIn();
+    const firestore = db as Firestore;
+
+    try {
+      console.log('Fetching active check-in for child:', child.id);
+      const checkInsRef = collection(firestore, 'checkIns');
+      const q = query(
+        checkInsRef,
+        where('childId', '==', child.id),
+        where('checkOutTime', '==', null)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const docData = querySnapshot.docs[0];
+        setActiveCheckIn({
+          id: docData.id,
+          ...docData.data()
+        } as CheckInRecord);
+      } else {
+        setActiveCheckIn(null);
+      }
+    } catch (error) {
+      console.error('Error fetching check-in status:', error);
+      toast.error('Failed to load check-in status');
+    } finally {
+      setLoading(false);
+    }
   }, [child.id]);
 
-  const processCheckOut = async (data: CheckInFormInputs) => {
+  useEffect(() => {
+    fetchActiveCheckIn();
+  }, [fetchActiveCheckIn]);
+
+  const handleCheckOut = async () => {
+    if (!db) {
+      toast.error('Firestore is not initialized');
+      return;
+    }
+
+    if (!user) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    if (!activeCheckIn) {
+      toast.error('No active check-in found');
+      return;
+    }
+
+    const firestore = db as Firestore;
+
     try {
-      setError('');
       setLoading(true);
       
-      if (!activeCheckIn) return;
-
-      // Validate required check-out fields
-      if (!data.pickUpPersonName?.trim()) {
-        setError('Pick-up person name is required');
-        return;
-      }
-      if (!data.pickUpRelationship?.trim()) {
-        setError('Pick-up person relationship is required');
-        return;
-      }
-      if (!data.pickUpSignature?.trim()) {
-        setError('Pick-up signature is required');
-        return;
-      }
-
-      await updateDoc(doc(db, 'checkIns', activeCheckIn.id), {
+      const checkInDocRef = doc(firestore, 'checkIns', activeCheckIn.id);
+      await updateDoc(checkInDocRef, {
         checkOutTime: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        updatedBy: user?.uid,
-        pickUpInfo: {
-          personName: data.pickUpPersonName.trim(),
-          relationship: data.pickUpRelationship.trim(),
-          signature: data.pickUpSignature.trim(),
-          notes: data.pickUpNotes?.trim() || '',
-          time: serverTimestamp()
-        }
+        updatedBy: user.uid
       });
+      
+      toast.success(`${child.firstName} checked out successfully`);
+      await fetchActiveCheckIn();
+      onComplete?.();
+    } catch (error) {
+      console.error('Error during check-out:', error);
+      toast.error('Failed to check out');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      toast.success(`${child.firstName} has been checked out successfully by ${data.pickUpPersonName}`, {
-        duration: 5000,
-        icon: '👋',
-      });
-      setActiveCheckIn(null);
-      onComplete();
-    } catch (err) {
-      console.error('Error processing check-out:', err);
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      setError(`Failed to process check-out: ${errorMessage}`);
-      toast.error(`Failed to process check-out: ${errorMessage}`, {
-        duration: 7000,
-      });
+  const handleCheckIn = async (data: CheckInFormInputs) => {
+    if (!db) {
+      toast.error('Firestore is not initialized');
+      return;
+    }
+
+    if (!user) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    const firestore = db as Firestore;
+
+    try {
+      setLoading(true);
+      
+      const checkInData = {
+        childId: child.id,
+        parentId: user.uid,
+        checkInTime: serverTimestamp(),
+        checkOutTime: null,
+        dropOffInfo: {
+          personName: data.dropOffPersonName.trim(),
+          relationship: data.dropOffRelationship.trim(),
+          signature: data.dropOffSignature.trim(),
+          notes: data.dropOffNotes?.trim() || ''
+        },
+        healthStatus: {
+          hasFever: data.hasFever,
+          temperature: data.temperature || null,
+          symptoms: data.symptoms || [],
+          medications: data.medications || []
+        },
+        createdAt: serverTimestamp(),
+        createdBy: user.uid
+      };
+
+      const checkInsRef = collection(firestore, 'checkIns');
+      await addDoc(checkInsRef, checkInData);
+      
+      toast.success(`${child.firstName} checked in successfully`);
+      await fetchActiveCheckIn();
+      onComplete?.();
+    } catch (error) {
+      console.error('Error during check-in:', error);
+      toast.error('Failed to check in');
     } finally {
       setLoading(false);
     }
@@ -147,45 +196,7 @@ function CheckInFormContent({ child, onComplete }: CheckInFormProps) {
       setLoading(true);
       console.log('Creating new check-in record');
       
-      const checkInData = {
-        childId: child.id,
-        parentId: user?.uid,
-        checkInTime: serverTimestamp(),
-        checkOutTime: null,
-        createdAt: serverTimestamp(),
-        createdBy: user?.uid,
-        dropOffInfo: {
-          personName: data.dropOffPersonName,
-          relationship: data.dropOffRelationship,
-          signature: data.dropOffSignature,
-          notes: data.dropOffNotes,
-        },
-        healthStatus: {
-          hasFever: data.hasFever,
-          temperature: data.hasFever ? parseFloat(data.temperature || '0') : null,
-          symptoms: data.symptoms ? data.symptoms.split(',').map(s => s.trim()) : [],
-          medications: data.medications ? data.medications.split(',').map(m => m.trim()) : [],
-        },
-        meals: {
-          breakfast: data.breakfast,
-          lunch: data.lunch,
-          snack: data.snack,
-        },
-        concerns: data.concerns || null,
-        alternativePickup: data.alternativePickupName ? {
-          name: data.alternativePickupName,
-          relationship: data.alternativePickupRelationship,
-          phone: data.alternativePickupPhone,
-        } : null,
-      };
-
-      const docRef = await addDoc(collection(db, 'checkIns'), checkInData);
-      console.log('Check-in created successfully with ID:', docRef.id);
-      toast.success(`${child.firstName} has been checked in successfully by ${data.dropOffPersonName}`, {
-        duration: 5000,
-        icon: '👋',
-      });
-      onComplete();
+      await handleCheckIn(data);
     } catch (err) {
       console.error('Error processing check-in:', err);
       const errorMessage = err instanceof Error ? err.message : String(err);
@@ -566,12 +577,7 @@ function CheckInFormContent({ child, onComplete }: CheckInFormProps) {
       <ConfirmDialog
         isOpen={showConfirmDialog}
         onClose={() => setShowConfirmDialog(false)}
-        onConfirm={() => {
-          if (checkOutData) {
-            processCheckOut(checkOutData);
-          }
-          setShowConfirmDialog(false);
-        }}
+        onConfirm={handleCheckOut}
         title="Confirm Check-Out"
         message={`Are you sure you want to check out ${child.firstName}? This action cannot be undone.`}
         confirmText="Check Out"
@@ -581,10 +587,10 @@ function CheckInFormContent({ child, onComplete }: CheckInFormProps) {
   );
 }
 
-export function CheckInForm(props: CheckInFormProps) {
+export function CheckInForm({ child, onComplete }: CheckInFormProps) {
   return (
     <ErrorBoundary errorComponent="inline">
-      <CheckInFormContent {...props} />
+      <CheckInFormContent child={child} onComplete={onComplete} />
     </ErrorBoundary>
   );
 } 
