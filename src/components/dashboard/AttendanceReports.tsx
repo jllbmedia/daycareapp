@@ -30,9 +30,11 @@ export function AttendanceReports() {
   const [childrenStats, setChildrenStats] = useState<ChildAttendance[]>([]);
   const [dateRange, setDateRange] = useState<'week' | 'month'>('week');
   const [error, setError] = useState('');
-  const user = useAuth();
+  const { user } = useAuth();
 
   const fetchAttendanceData = useCallback(async () => {
+    if (!user) return;
+    
     try {
       setLoading(true);
       const days = dateRange === 'week' ? 7 : 30;
@@ -114,7 +116,7 @@ export function AttendanceReports() {
     } finally {
       setLoading(false);
     }
-  }, [dateRange, user?.uid]);
+  }, [dateRange, user]);
 
   useEffect(() => {
     fetchAttendanceData();

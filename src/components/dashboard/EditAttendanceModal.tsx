@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { CheckInRecord } from '@/types';
@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 interface EditAttendanceModalProps {
   record: CheckInRecord;
   onClose: () => void;
-  onUpdate: () => void;
+  onUpdate: (updatedRecord: CheckInRecord) => void;
 }
 
 export function EditAttendanceModal({ record, onClose, onUpdate }: EditAttendanceModalProps) {
@@ -29,7 +29,8 @@ export function EditAttendanceModal({ record, onClose, onUpdate }: EditAttendanc
       relationship: record.pickUpInfo.relationship || '',
       signature: record.pickUpInfo.signature || '',
       notes: record.pickUpInfo.notes || '',
-    } : null,
+      time: record.pickUpInfo.time,
+    } : undefined,
     healthStatus: {
       hasFever: record.healthStatus?.hasFever || false,
       temperature: record.healthStatus?.temperature || null,
@@ -59,13 +60,17 @@ export function EditAttendanceModal({ record, onClose, onUpdate }: EditAttendanc
         },
         meals: formData.meals,
         concerns: formData.concerns || null,
-        updatedAt: new Date(),
+        updatedAt: Timestamp.now(),
         updatedBy: user?.uid,
       };
 
       await updateDoc(doc(db, 'checkIns', record.id), updateData);
       toast.success('Attendance record updated successfully');
-      onUpdate();
+      onUpdate({
+        ...record,
+        ...updateData,
+        pickUpInfo: updateData.pickUpInfo || undefined,
+      });
       onClose();
     } catch (err) {
       console.error('Error updating attendance record:', err);
@@ -199,23 +204,16 @@ export function EditAttendanceModal({ record, onClose, onUpdate }: EditAttendanc
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              {loading ? (
-                <>
-                  <LoadingSpinner size="sm" variant="white" />
-                  <span className="ml-2">Saving...</span>
-                </>
-              ) : (
-                'Save Changes'
-              )}
+              {loading ? <LoadingSpinner size="sm" /> : 'Save Changes'}
             </button>
           </div>
         </form>

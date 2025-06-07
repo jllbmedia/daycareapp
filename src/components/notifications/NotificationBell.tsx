@@ -7,16 +7,10 @@ import { useRouter } from 'next/router';
 import { useNotifications } from './NotificationProvider';
 
 export function NotificationBell() {
-  const {
-    notifications,
-    unreadCount,
-    markAsRead,
-    markAllAsRead,
-    clearNotifications,
-  } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const notificationContext = useNotifications();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -28,6 +22,18 @@ export function NotificationBell() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+  
+  if (!notificationContext) {
+    return null;
+  }
+
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    clearNotifications,
+  } = notificationContext;
 
   const handleNotificationClick = async (notification: Notification) => {
     await markAsRead(notification.id);
@@ -108,7 +114,7 @@ export function NotificationBell() {
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
                     className={`flex items-start space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                      notification.isRead
+                      notification.read
                         ? 'bg-white hover:bg-gray-50'
                         : 'bg-indigo-50 hover:bg-indigo-100'
                     }`}
@@ -124,10 +130,10 @@ export function NotificationBell() {
                         {notification.message}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        {format(notification.timestamp, 'MMM d, h:mm a')}
+                        {format(notification.timestamp.toDate(), 'MMM d, h:mm a')}
                       </p>
                     </div>
-                    {!notification.isRead && (
+                    {!notification.read && (
                       <div className="flex-shrink-0">
                         <div className="h-2 w-2 bg-indigo-600 rounded-full" />
                       </div>

@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { collection, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
-import { AttendanceRecord } from '@/types';
+import { CheckInRecord, Child } from '@/types';
 import toast from 'react-hot-toast';
 import { EditAttendanceModal } from './EditAttendanceModal';
 
 interface AttendanceData {
-  [key: string]: AttendanceRecord[];
+  [key: string]: (CheckInRecord & { childName?: string })[];
 }
 
 export function ParentAttendanceHistory() {
@@ -18,7 +18,7 @@ export function ParentAttendanceHistory() {
   const [error, setError] = useState<string | null>(null);
   const [attendanceData, setAttendanceData] = useState<AttendanceData>({});
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<CheckInRecord | null>(null);
 
   const fetchChildrenAndAttendance = useCallback(async () => {
     if (!user?.uid) return;
@@ -35,10 +35,22 @@ export function ParentAttendanceHistory() {
       );
 
       const querySnapshot = await getDocs(q);
-      const records = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-        ...doc.data()
-      })) as AttendanceRecord[];
+      const records = await Promise.all(
+        querySnapshot.docs.map(async (docSnapshot) => {
+          const data = docSnapshot.data();
+          // Fetch child data
+          const childDocRef = doc(db, 'children', data.childId);
+          const childDoc = await getDoc(childDocRef);
+          const childData = childDoc.data() as Child;
+          return {
+            ...data,
+            id: docSnapshot.id,
+            checkInTime: data.checkInTime as Timestamp,
+            checkOutTime: data.checkOutTime as Timestamp | null,
+            childName: childData ? `${childData.firstName} ${childData.lastName}` : 'Unknown Child'
+          } as CheckInRecord & { childName: string };
+        })
+      );
 
       setAttendanceData({
         [user.uid]: records
@@ -56,12 +68,12 @@ export function ParentAttendanceHistory() {
     fetchChildrenAndAttendance();
   }, [fetchChildrenAndAttendance]);
 
-  const formatDate = (timestamp: Timestamp) => {
+  const formatDate = (timestamp: Timestamp | null) => {
     if (!timestamp) return '';
     return timestamp.toDate().toLocaleString();
   };
 
-  const handleEdit = (record: AttendanceRecord) => {
+  const handleEdit = (record: CheckInRecord) => {
     setSelectedRecord(record);
     setIsEditModalOpen(true);
   };
@@ -191,7 +203,7 @@ export function ParentAttendanceHistory() {
             setAttendanceData(prev => ({
               ...prev,
               [user.uid]: prev[user.uid].map(record =>
-                record.id === updatedRecord.id ? updatedRecord : record
+                record.id === updatedRecord.id ? { ...updatedRecord, childName: record.childName } : record
               )
             }));
             setIsEditModalOpen(false);

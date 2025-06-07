@@ -1,3 +1,5 @@
+'use client';
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { db } from '@/lib/firebase';
 import {
@@ -63,11 +65,11 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       })) as Notification[];
 
       setNotifications(newNotifications);
-      setUnreadCount(newNotifications.filter(n => !n.isRead).length);
+      setUnreadCount(newNotifications.filter(n => !n.read).length);
 
       // Show toast for new notifications
       snapshot.docChanges().forEach(change => {
-        if (change.type === 'added' && !change.doc.data().isRead) {
+        if (change.type === 'added' && !change.doc.data().read) {
           const notification = change.doc.data() as DocumentData;
           toast(notification.message, {
             icon: getNotificationIcon(notification.type),
@@ -101,7 +103,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     try {
       const notificationRef = doc(db, 'notifications', notificationId);
       await updateDoc(notificationRef, {
-        isRead: true,
+        read: true,
         updatedAt: serverTimestamp(),
       });
     } catch (err) {
@@ -114,11 +116,11 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     if (!user?.uid) return;
 
     try {
-      const unreadNotifications = notifications.filter(n => !n.isRead);
+      const unreadNotifications = notifications.filter(n => !n.read);
       await Promise.all(
         unreadNotifications.map(notification =>
           updateDoc(doc(db, 'notifications', notification.id), {
-            isRead: true,
+            read: true,
             updatedAt: serverTimestamp(),
           })
         )
@@ -134,7 +136,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     if (!user?.uid) return;
 
     try {
-      const readNotifications = notifications.filter(n => n.isRead);
+      const readNotifications = notifications.filter(n => n.read);
       await Promise.all(
         readNotifications.map(notification =>
           updateDoc(doc(db, 'notifications', notification.id), {

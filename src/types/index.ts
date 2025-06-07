@@ -36,15 +36,35 @@ export interface MedicalInfo {
 
 export interface AttendanceRecord extends FirestoreDocument {
   childId: string;
-  checkInTime: FirebaseTimestamp;
-  checkOutTime?: FirebaseTimestamp;
+  parentId: string;
+  checkInTime: Timestamp;
+  checkOutTime?: Timestamp;
   status: 'checked-in' | 'checked-out';
   notes?: string;
+  dropOffInfo: {
+    personName: string;
+    relationship: string;
+    signature: string;
+    notes: string;
+  };
+  pickUpInfo?: {
+    personName: string;
+    relationship: string;
+    signature: string;
+    notes: string;
+    time: Timestamp;
+  };
+  healthStatus: {
+    hasFever: boolean;
+    temperature: number | null;
+    symptoms: string[];
+    medications: string[];
+  };
 }
 
 export interface DailyActivity extends FirestoreDocument {
   childId: string;
-  timestamp: FirebaseTimestamp;
+  timestamp: Timestamp;
   type: 'meal' | 'nap' | 'activity' | 'incident' | 'medication';
   description: string;
   notes?: string;
@@ -54,18 +74,23 @@ export interface Message extends FirestoreDocument {
   senderId: string;
   recipientId: string;
   content: string;
-  timestamp: FirebaseTimestamp;
+  timestamp: Timestamp;
   read: boolean;
 }
 
 export interface Notification extends FirestoreDocument {
   userId: string;
-  type: 'info' | 'warning' | 'error' | 'success';
+  type: 'info' | 'warning' | 'error' | 'success' | 'message' | 'check-in' | 'check-out' | 'activity';
   title: string;
   message: string;
-  timestamp: FirebaseTimestamp;
+  timestamp: Timestamp;
   read: boolean;
   link?: string;
+  data?: {
+    senderId?: string;
+    childId?: string;
+    activityId?: string;
+  };
 }
 
 export interface CheckInRecord {
